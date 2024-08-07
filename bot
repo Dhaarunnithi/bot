@@ -1,0 +1,51 @@
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+import requests
+
+# Replace 'YOUR_TELEGRAM_BOT_TOKEN' with your actual bot token
+TELEGRAM_BOT_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'
+OMDB_API_KEY = 'YOUR_OMDB_API_KEY'  # You can get an API key from http://www.omdbapi.com/apikey.aspx
+
+def start(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text('Hi! I am a Movie Info Bot. Send me the name of a movie to get started.')
+
+def get_movie_info(update: Update, context: CallbackContext) -> None:
+    movie_name = update.message.text
+    response = requests.get(f'http://www.omdbapi.com/?t={movie_name}&apikey={OMDB_API_KEY}')
+    data = response.json()
+
+    if data['Response'] == 'True':
+        movie_info = (
+            f"Title: {data['Title']}\n"
+            f"Year: {data['Year']}\n"
+            f"Rated: {data['Rated']}\n"
+            f"Released: {data['Released']}\n"
+            f"Runtime: {data['Runtime']}\n"
+            f"Genre: {data['Genre']}\n"
+            f"Director: {data['Director']}\n"
+            f"Writer: {data['Writer']}\n"
+            f"Actors: {data['Actors']}\n"
+            f"Plot: {data['Plot']}\n"
+            f"Language: {data['Language']}\n"
+            f"Country: {data['Country']}\n"
+            f"Awards: {data['Awards']}\n"
+            f"Poster: {data['Poster']}\n"
+            f"IMDB Rating: {data['imdbRating']}"
+        )
+    else:
+        movie_info = "Sorry, I couldn't find any information on that movie."
+
+    update.message.reply_text(movie_info)
+
+def main() -> None:
+    updater = Updater(TELEGRAM_BOT_TOKEN)
+    dispatcher = updater.dispatcher
+
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, get_movie_info))
+
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
